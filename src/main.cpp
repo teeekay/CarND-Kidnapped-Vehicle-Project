@@ -4,10 +4,13 @@
 #include <math.h>
 #include "particle_filter.h"
 
+#include "debugging.h"
+
 using namespace std;
 
 // for convenience
 using json = nlohmann::json;
+
 
 // Checks if the SocketIO event has JSON data.
 // If there is data the JSON object in string format will be returned,
@@ -25,27 +28,53 @@ std::string hasData(std::string s) {
   return "";
 }
 
-int main()
+int main(int argc, char *argv[])
 {
+  int number_of_particles = 25;
+  if (argc == 2)
+  {
+	cout << "The number of particles argument supplied is " << argv[1] << endl;
+	int tmp_num_particles = atoi(argv[1]);
+	if (tmp_num_particles > 0 and tmp_num_particles < 1000) {
+	  number_of_particles = tmp_num_particles;
+	}
+  } else {
+	cout << "To specify the number of particles to use at run time call " << endl << endl;
+	cout << argv[0] << " num_particles" << endl << endl;
+	cout << "like this:" << endl << argv[0] << " 100" << endl;
+	cout << "num_particles should be an integer between 1 and 999."<< endl;
+	cout << "Otherwise, " << number_of_particles << " Particles will be used by default." << endl;
+  }
+  
+  cout << "Using " << number_of_particles << " particles on this run."<< endl << endl;
+
   uWS::Hub h;
 
   //Set up parameters here
   double delta_t = 0.1; // Time elapsed between measurements [sec]
-  double sensor_range = 50; // Sensor range [m]
+  double sensor_range = 50; //50 Sensor range [m]
 
   double sigma_pos [3] = {0.3, 0.3, 0.01}; // GPS measurement uncertainty [x [m], y [m], theta [rad]]
   double sigma_landmark [2] = {0.3, 0.3}; // Landmark measurement uncertainty [x [m], y [m]]
 
+  
+
   // Read map data
   Map map;
   if (!read_map_data("../data/map_data.txt", map)) {
+  //if (!read_map_data("/mnt/c/Users/tknight/Source/Repos/CarND/CarND-Kidnapped-Vehicle-Project/data/map_data.txt", map)) {
 	  cout << "Error: Could not open map file" << endl;
 	  return -1;
   }
+  D(else {
+	  cout << "read in map data" << endl;
+  })
 
   // Create particle filter
-  ParticleFilter pf;
-
+  // with specific number of particles
+  ParticleFilter pf(number_of_particles);
+  D1(cout << "created Particlefilter" << endl;)
+  
   h.onMessage([&pf,&map,&delta_t,&sensor_range,&sigma_pos,&sigma_landmark](uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length, uWS::OpCode opCode) {
     // "42" at the start of the message means there's a websocket message event.
     // The 4 signifies a websocket message
@@ -102,7 +131,7 @@ int main()
         	std::istream_iterator<float>(),
         	std::back_inserter(y_sense));
 
-        	for(int i = 0; i < x_sense.size(); i++)
+        	for(unsigned int i = 0; i < x_sense.size(); i++)
         	{
         		LandmarkObs obs;
         		obs.x = x_sense[i];
@@ -116,19 +145,19 @@ int main()
 
 		  // Calculate and output the average weighted error of the particle filter over all time steps so far.
 		  vector<Particle> particles = pf.particles;
-		  int num_particles = particles.size();
+		  unsigned int num_particles = particles.size();
 		  double highest_weight = -1.0;
 		  Particle best_particle;
 		  double weight_sum = 0.0;
-		  for (int i = 0; i < num_particles; ++i) {
+		  for (unsigned int i = 0; i < num_particles; ++i) {
 			if (particles[i].weight > highest_weight) {
 				highest_weight = particles[i].weight;
 				best_particle = particles[i];
 			}
 			weight_sum += particles[i].weight;
 		  }
-		  cout << "highest w " << highest_weight << endl;
-		  cout << "average w " << weight_sum/num_particles << endl;
+		  cout << "highest w " << highest_weight;// << endl;
+		  cout << ", average w " << weight_sum/num_particles << endl;
 
           json msgJson;
           msgJson["best_particle_x"] = best_particle.x;

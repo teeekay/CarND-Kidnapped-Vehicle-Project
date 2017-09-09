@@ -29,8 +29,8 @@ class ParticleFilter {
 	
 	// Number of particles to draw
 	int num_particles; 
-	
-	
+	// maximum range of sensor
+	double sensor_max;
 	
 	// Flag, if filter is initialized
 	bool is_initialized;
@@ -46,6 +46,9 @@ public:
 	// Constructor
 	// @param num_particles Number of particles
 	ParticleFilter() : num_particles(0), is_initialized(false) {}
+	ParticleFilter(int number_particles) : num_particles(number_particles), is_initialized(false) {}
+	ParticleFilter(int number_particles, double sensor_range) : 
+		num_particles(number_particles), sensor_max(sensor_range), is_initialized(false) {}
 
 	// Destructor
 	~ParticleFilter() {}
@@ -84,8 +87,8 @@ public:
 	 * updateWeights Updates the weights for each particle based on the likelihood of the 
 	 *   observed measurements. 
 	 * @param sensor_range Range [m] of sensor
-	 * @param std_landmark[] Array of dimension 2 [standard deviation of range [m],
-	 *   standard deviation of bearing [rad]]
+	 * @param std_landmark[] Array of dimension 2 [standard deviation of x [m],
+	 *   standard deviation of y [m]]
 	 * @param observations Vector of landmark observations
 	 * @param map Map class containing map landmarks
 	 */
@@ -97,6 +100,11 @@ public:
 	 *   the new set of particles.
 	 */
 	void resample();
+
+	/**
+	* Print out the particles.
+	*/
+	void printParticles();
 
 	/*
 	 * Set a particles list of associations, along with the associations calculated world x,y coordinates
@@ -114,6 +122,8 @@ public:
 	const bool initialized() const {
 		return is_initialized;
 	}
+
+
 };
 
 
